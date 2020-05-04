@@ -4,18 +4,18 @@
 
 struct code_entry{
     char *str;
-    char *code;
+    int code;
     struct code_entry *next;
 };
 
 struct code_entry *head=NULL;  //dictionary of lzw code, using the data structure of linked list
 int dec = 0;
 
-char *lzw(char *input); //constructing the dictionary
+int *lzw(char *input); //constructing the dictionary
 int search_dictionary(char *a,char b);   //return the index of first match of char a and b. If no match is found, return -1.
 int add_entry_to_dictionary(char *str,char c,int dec); //add an entry to the dictionary, we convert the decimal number inside and use it as the code for that string.
 char *convert_binary(int num);
-char *got_the_code(char *tmp);  //output the code of the specific one.
+int got_the_code(char *tmp);  //output the code of the specific one.
 void init_dic();
 void dump_dic();
 
@@ -29,12 +29,12 @@ int main(void){
 }
 
 
-char *lzw(char *input){
+int *lzw(char *input){
     int current_head;
     char tmp[100] = "\0";    //known as a
     char next;
-    char *output = malloc(100000);    //coded version
-    strcpy(output,"\0");
+    int *output = malloc(100000);    //coded version
+    int coded_counter=0;
     int dictionary_entry = 0;
     int search_res;
     
@@ -52,11 +52,13 @@ char *lzw(char *input){
         else{
             printf("going to add one word\n");
             add_entry_to_dictionary(tmp,next,dec);
-            char *x=got_the_code(tmp);
-            printf("%s\t%s\n",output,x);
-            strncat(output,x,strlen(x)); //encoded content
+            //char *x=got_the_code(tmp);
+            //printf("%s\t%s\n",output,x);
+            int t = got_the_code(tmp);
+            output[coded_counter++] = t;
+            //strncat(output,x,strlen(x)); //encoded content
             dec++;
-            memset(tmp,0,100);   //restore the tmp string which is already stored to the dictionary.
+            //memset(tmp,0,100);   //restore the tmp string which is already stored to the dictionary.
             tmp[0] = input[current_head+1];
             printf("\t\t%s",tmp);
         }
@@ -66,7 +68,6 @@ char *lzw(char *input){
 
 char *convert_binary(int num){
     char *binaryNum=malloc(8);  //8 bit is enough for our implementation 
-    //strcpy(binaryNum,"\0");
     memset(binaryNum,0,8);
     int i = 0; 
 
@@ -85,12 +86,10 @@ int search_dictionary(char *a,char b){
     strncpy(concated,a,strlen(a));
     concated[strlen(a)] = b;
     concated[strlen(a)+1]='\0';
-    //printf("the string to be search is %s",concated);
     for(struct code_entry *iterator=head; iterator!=NULL; iterator=iterator->next){
         if(iterator==NULL){
             break;
         }
-        //printf("%s",iterator->str);
         if(strncmp(concated,iterator->str,strlen(a)+2)==0){  //comparison is matched
             free(concated);
             return 1;
@@ -100,7 +99,6 @@ int search_dictionary(char *a,char b){
         }
     } 
     free(concated);
-    //printf("not found\n");
     return -1;
 }
 
@@ -111,8 +109,7 @@ int add_entry_to_dictionary(char *str,char c,int dec){
         strcpy(head->str,str);
         head->str[strlen(str)] = c;
         head->str[strlen(str)+1] = '\0';
-        //head->str = str;
-        head->code = convert_binary(dec);
+        head->code = dec;
         head->next = NULL;
         printf("added %s%c\n",str,c);
     }
@@ -127,24 +124,21 @@ int add_entry_to_dictionary(char *str,char c,int dec){
         strcpy(new->str,str);
         new->str[strlen(str)] = c;
         new->str[strlen(str)+1] = '\0';
-        //new->str = str;
-        new->code = convert_binary(dec);
+        new->code = dec;
         new->next = NULL;
         iterator->next = new;
-        printf("added %s%c\n",str,c);
     }
 }
 
-char *got_the_code(char *tmp){
+int got_the_code(char *tmp){
     struct code_entry *iterator = head;
     for(; iterator!=NULL; iterator = iterator->next){
         if(iterator==NULL)  break;
-        //printf("%s\t%s\n",tmp,iterator->str);
         if(strcmp(tmp,iterator->str)==0){
             return iterator->code;
         }
     }
-    return NULL;
+    return -1;
 }
 
 void init_dic(){    //add a-z to dictionary
@@ -155,7 +149,7 @@ void init_dic(){    //add a-z to dictionary
             head->str[0]=i+'a';
             head->str[1] = '\0';
             //head->str = str;
-            head->code = convert_binary(dec);
+            head->code = dec;
             dec++;
             head->next = NULL;
             printf("added %c\n",i+'a');
@@ -171,17 +165,16 @@ void init_dic(){    //add a-z to dictionary
             new->str[0]=i+'a';
             new->str[1] = '\0';
             //new->str = str;
-            new->code = convert_binary(dec);
+            new->code = dec;
             dec++;
             new->next = NULL;
             iterator->next = new;
-            printf("added %c\n",i+'a');
         }
     }
 }
 
 void dump_dic(){
     for (struct code_entry *idx = head; idx!=NULL; idx = idx->next){
-        printf("%s,%s\n",idx->str,idx->code);
+        printf("%s,%d\n",idx->str,idx->code);
     }
 }
